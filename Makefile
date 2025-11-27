@@ -1,0 +1,88 @@
+.PHONY: help test lint lint-fix fmt vet tidy clean coverage install-tools check-tools check
+
+# Default target
+help:
+	@echo "Available targets:"
+	@echo "  make test          - Run tests"
+	@echo "  make lint          - Run linter"
+	@echo "  make lint-fix      - Run linter with auto-fix"
+	@echo "  make fmt           - Format code"
+	@echo "  make vet           - Run go vet"
+	@echo "  make tidy          - Tidy go modules"
+	@echo "  make coverage      - Generate coverage report"
+	@echo "  make clean         - Clean build artifacts"
+	@echo "  make install-tools - Install required tools"
+	@echo "  make check         - Run all checks (fmt, vet, lint, test)"
+
+# Check if required tools are installed
+check-tools:
+	@command -v golangci-lint >/dev/null || { \
+		echo "Error: golangci-lint not found. Run 'make install-tools' first."; \
+		exit 1; \
+	}
+	@command -v gofumpt >/dev/null || { \
+		echo "Error: gofumpt not found. Run 'make install-tools' first."; \
+		exit 1; \
+	}
+
+# Install required tools
+install-tools:
+	@echo "Installing required tools..."
+	@command -v golangci-lint >/dev/null || \
+		(command -v brew >/dev/null && brew install golangci-lint) || \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@command -v gofumpt >/dev/null || \
+		(command -v brew >/dev/null && brew install gofumpt) || \
+		go install mvdan.cc/gofumpt@latest
+	@echo "Done!"
+
+# Run tests
+test:
+	@echo "Running tests..."
+	@go test -v -race ./...
+
+# Run tests with coverage
+coverage:
+	@echo "Running tests with coverage..."
+	@go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+	@go tool cover -html=coverage.txt -o coverage.html
+	@echo "Coverage report generated: coverage.html"
+
+# Run linter
+lint: check-tools
+	@echo "Running linter..."
+	@golangci-lint run ./...
+
+# Run linter with auto-fix
+lint-fix: check-tools
+	@echo "Running linter with auto-fix..."
+	@golangci-lint run --fix ./...
+
+# Format code
+fmt: check-tools
+	@echo "Formatting code..."
+	@go fmt ./...
+	@gofumpt -l -w .
+	@echo "Code formatted successfully!"
+
+# Run go vet
+vet:
+	@echo "Running go vet..."
+	@go vet ./...
+
+# Tidy dependencies
+tidy:
+	@echo "Tidying go modules..."
+	@go mod tidy
+	@echo "Dependencies tidied!"
+
+# Clean build artifacts
+clean:
+	@echo "Cleaning build artifacts..."
+	@rm -f coverage.txt coverage.html
+	@go clean -cache -testcache
+	@echo "Clean complete!"
+
+# Run all checks
+check: fmt vet lint test
+	@echo "All checks passed!"
