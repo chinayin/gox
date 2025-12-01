@@ -64,7 +64,7 @@ func New(opts Options) (*slog.Logger, error) {
 	core := zapcore.NewCore(enc, ws, lvl)
 
 	// 创建 zap logger
-	zl := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+	zl := zap.New(core, zap.AddStacktrace(zapcore.ErrorLevel))
 
 	// 创建 slog Handler
 	h := NewZapHandler(zl, lvl)

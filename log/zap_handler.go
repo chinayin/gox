@@ -3,10 +3,19 @@ package log
 import (
 	"context"
 	"log/slog"
+	"runtime"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
+
+// slogLevelToZap 日志级别映射表
+var slogLevelToZap = map[slog.Level]zapcore.Level{
+	slog.LevelDebug: zapcore.DebugLevel,
+	slog.LevelInfo:  zapcore.InfoLevel,
+	slog.LevelWarn:  zapcore.WarnLevel,
+	slog.LevelError: zapcore.ErrorLevel,
+}
 
 // ZapHandler 实现 slog.Handler 接口，底层使用 zap
 type ZapHandler struct {
@@ -26,28 +35,35 @@ func NewZapHandler(logger *zap.Logger, level zapcore.Level) *ZapHandler {
 
 // Enabled 判断是否启用指定级别的日志
 func (h *ZapHandler) Enabled(_ context.Context, level slog.Level) bool {
-	return h.slogLevelToZap(level) >= h.level
+	zapLevel, ok := slogLevelToZap[level]
+	if !ok {
+		zapLevel = zapcore.InfoLevel
+	}
+	return zapLevel >= h.level
 }
 
-// Handle 处理日志记录
+// Handle 处理日志记录（参考 samber/slog-zap 实现）
 func (h *ZapHandler) Handle(_ context.Context, r slog.Record) error {
-	// 转换日志级别
-	lvl := h.slogLevelToZap(r.Level)
+	zapLevel, ok := slogLevelToZap[r.Level]
+	if !ok {
+		zapLevel = zapcore.InfoLevel
+	}
 
-	// 收集所有字段
 	fields := make([]zap.Field, 0, len(h.attrs)+r.NumAttrs())
-
-	// 添加累积的属性
 	fields = append(fields, h.attrs...)
 
-	// 添加当前记录的属性
 	r.Attrs(func(attr slog.Attr) bool {
 		fields = append(fields, h.slogAttrToZap(attr))
 		return true
 	})
 
-	// 记录日志
-	if ce := h.logger.Check(lvl, r.Message); ce != nil {
+	// 使用 Check 获取 CheckedEntry
+	if ce := h.logger.Check(zapLevel, r.Message); ce != nil {
+		// 关键：使用 slog.Record.PC 设置正确的 caller
+		if r.PC != 0 {
+			frame, _ := runtime.CallersFrames([]uintptr{r.PC}).Next()
+			ce.Caller = zapcore.NewEntryCaller(r.PC, frame.File, frame.Line, true)
+		}
 		ce.Write(fields...)
 	}
 
@@ -58,11 +74,9 @@ func (h *ZapHandler) Handle(_ context.Context, r slog.Record) error {
 func (h *ZapHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	newAttrs := make([]zap.Field, len(h.attrs), len(h.attrs)+len(attrs))
 	copy(newAttrs, h.attrs)
-
 	for _, attr := range attrs {
 		newAttrs = append(newAttrs, h.slogAttrToZap(attr))
 	}
-
 	return &ZapHandler{
 		logger: h.logger,
 		level:  h.level,
@@ -80,25 +94,10 @@ func (h *ZapHandler) WithGroup(name string) slog.Handler {
 	}
 }
 
-// slogLevelToZap 将 slog.Level 转换为 zapcore.Level
-func (h *ZapHandler) slogLevelToZap(level slog.Level) zapcore.Level {
-	switch {
-	case level >= slog.LevelError:
-		return zapcore.ErrorLevel
-	case level >= slog.LevelWarn:
-		return zapcore.WarnLevel
-	case level >= slog.LevelInfo:
-		return zapcore.InfoLevel
-	default:
-		return zapcore.DebugLevel
-	}
-}
-
 // slogAttrToZap 将 slog.Attr 转换为 zap.Field
 func (h *ZapHandler) slogAttrToZap(attr slog.Attr) zap.Field {
 	k := attr.Key
 	v := attr.Value
-
 	switch v.Kind() {
 	case slog.KindString:
 		return zap.String(k, v.String())
@@ -119,8 +118,6 @@ func (h *ZapHandler) slogAttrToZap(attr slog.Attr) zap.Field {
 	case slog.KindGroup:
 		// 处理分组属性
 		attrs := v.Group()
-		// 将 group 转换为 map，因为 zap.Namespace 不能用于此处的值上下文
-		// 且 zap.Any 需要具体的值
 		groupMap := make(map[string]any, len(attrs))
 		for _, a := range attrs {
 			groupMap[a.Key] = a.Value.Any()
