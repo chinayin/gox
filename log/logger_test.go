@@ -3,6 +3,7 @@ package log
 import (
 	"bytes"
 	"log/slog"
+	"os"
 	"strings"
 	"testing"
 )
@@ -91,6 +92,110 @@ func TestParseLevel(t *testing.T) {
 			result := parseLevel(tt.input)
 			if result != tt.expected {
 				t.Errorf("parseLevel(%q) = %v, want %v", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestNew_WithFileOutput(t *testing.T) {
+	tmpDir := t.TempDir()
+	logFile := tmpDir + "/logs/nested/app.log"
+
+	opts := Options{
+		Level:  LevelInfo,
+		Format: FormatJSON,
+		Output: logFile,
+	}
+
+	logger, err := New(opts)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	defer func() { _ = logger.Close() }()
+
+	if logger == nil {
+		t.Fatal("New() returned nil logger")
+	}
+
+	// 验证目录已创建
+	dirPath := tmpDir + "/logs/nested"
+	if info, err := os.Stat(dirPath); err != nil {
+		t.Errorf("directory should be created: %v", err)
+	} else if !info.IsDir() {
+		t.Errorf("%s should be a directory", dirPath)
+	}
+
+	// 写入日志
+	logger.Info("test message", "key", "value")
+
+	// 验证文件已创建
+	if _, err := os.Stat(logFile); err != nil {
+		t.Errorf("log file should be created: %v", err)
+	}
+}
+
+func TestLogger_Close(t *testing.T) {
+	tmpDir := t.TempDir()
+	logFile := tmpDir + "/test.log"
+
+	opts := Options{
+		Level:  LevelInfo,
+		Format: FormatJSON,
+		Output: logFile,
+	}
+
+	logger, err := New(opts)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+
+	// 写入日志
+	logger.Info("test message")
+
+	// 关闭 logger
+	if err := logger.Close(); err != nil {
+		t.Errorf("Close() error = %v", err)
+	}
+
+	// 验证文件存在
+	if _, err := os.Stat(logFile); err != nil {
+		t.Errorf("log file should exist after Close(): %v", err)
+	}
+}
+
+func TestEnsureOutputDir(t *testing.T) {
+	tests := []struct {
+		name      string
+		output    string
+		shouldErr bool
+	}{
+		{
+			name:      "stdout",
+			output:    OutputStdout,
+			shouldErr: false,
+		},
+		{
+			name:      "stderr",
+			output:    OutputStderr,
+			shouldErr: false,
+		},
+		{
+			name:      "file with nested dirs",
+			output:    t.TempDir() + "/logs/app/test.log",
+			shouldErr: false,
+		},
+		{
+			name:      "current dir",
+			output:    "test.log",
+			shouldErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := EnsureOutputDir(tt.output)
+			if (err != nil) != tt.shouldErr {
+				t.Errorf("expected error: %v, got: %v", tt.shouldErr, err)
 			}
 		})
 	}

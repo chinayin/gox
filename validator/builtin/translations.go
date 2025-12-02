@@ -19,7 +19,7 @@ func RegisterTranslations(v *validator.Validate, trans ut.Translator, locale str
 }
 
 // registerTranslation 注册单个翻译
-func registerTranslation(v *validator.Validate, trans ut.Translator, tag string, translation string) error {
+func registerTranslation(v *validator.Validate, trans ut.Translator, tag, translation string) error {
 	return v.RegisterTranslation(
 		tag,
 		trans,

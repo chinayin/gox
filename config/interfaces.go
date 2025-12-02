@@ -2,7 +2,7 @@ package config
 
 // DefaultOption 默认值设置函数
 // 用于在 SetDefaults 方法中设置配置的默认值
-type DefaultOption func(key string, value interface{})
+type DefaultOption func(key string, value any)
 
 // Defaultable 配置可以设置默认值
 // 实现此接口的配置结构体可以通过 SetDefaults 方法提供默认值

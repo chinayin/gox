@@ -109,7 +109,7 @@
 // To disable environment variable reading (e.g., to avoid conflicts):
 //
 //	loader := config.NewLoader(config.WithoutEnv())
-//	if err := loader.Load("spider.yaml", &cfg); err != nil {
+//	if err := loader.Load("config.yaml", &cfg); err != nil {
 //	    return err
 //	}
 //

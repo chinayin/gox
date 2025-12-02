@@ -7,7 +7,7 @@ import (
 func TestValidate_OfficialRules(t *testing.T) {
 	tests := []struct {
 		name    string
-		data    interface{}
+		data    any
 		wantErr bool
 	}{
 		{
@@ -87,7 +87,7 @@ func TestGlobal(t *testing.T) {
 func TestValidate_SnowflakeID(t *testing.T) {
 	tests := []struct {
 		name    string
-		data    interface{}
+		data    any
 		wantErr bool
 	}{
 		{
@@ -227,7 +227,7 @@ func TestTranslatedError(t *testing.T) {
 }
 
 func contains(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && (s == substr || len(s) >= len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || containsMiddle(s, substr)))
+	return s != "" && substr != "" && (s == substr || len(s) >= len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || containsMiddle(s, substr)))
 }
 
 func containsMiddle(s, substr string) bool {

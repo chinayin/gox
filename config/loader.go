@@ -48,7 +48,7 @@ func NewLoader(opts ...Option) *Loader {
 
 // Load 加载配置文件
 // 自动处理：默认值、环境变量、.local.yaml 合并、验证
-func (l *Loader) Load(path string, config interface{}) error {
+func (l *Loader) Load(path string, config any) error {
 	// 1. 应用默认值（struct tag + SetDefaults）
 	if err := ApplyDefaults(l.v, config); err != nil {
 		return err
@@ -82,13 +82,13 @@ func (l *Loader) Load(path string, config interface{}) error {
 
 // LoadDirectory 加载目录下所有配置文件
 // configType 应该是配置结构体的指针（例如：&Config{}）
-func (l *Loader) LoadDirectory(dir string, configType interface{}) ([]interface{}, error) {
+func (l *Loader) LoadDirectory(dir string, configType any) ([]any, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory %s: %w", dir, err)
 	}
 
-	configs := make([]interface{}, 0, len(entries))
+	configs := make([]any, 0, len(entries))
 
 	for _, entry := range entries {
 		if entry.IsDir() {
@@ -120,7 +120,7 @@ func (l *Loader) LoadDirectory(dir string, configType interface{}) ([]interface{
 }
 
 // Get 获取配置值
-func (l *Loader) Get(key string) interface{} {
+func (l *Loader) Get(key string) any {
 	return l.v.Get(key)
 }
 
@@ -201,7 +201,7 @@ func isLocalConfig(filename string) bool {
 }
 
 // createInstance 创建配置实例
-func createInstance(template interface{}) interface{} {
+func createInstance(template any) any {
 	t := reflect.TypeOf(template)
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()

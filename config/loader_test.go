@@ -202,7 +202,7 @@ port: 8083
 	// 验证配置内容
 	names := make(map[string]bool)
 	for _, result := range results {
-		cfg := result.(*testConfig)
+		cfg, _ := result.(*testConfig)
 		names[cfg.Name] = true
 	}
 

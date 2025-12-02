@@ -19,8 +19,8 @@ func NewAdapter(cmd *cobra.Command) cli.CommandAdapter {
 
 // GetName 获取应用名称
 func (a *Adapter) GetName() string {
-	if a.cmd.Use != "" {
-		return a.cmd.Use
+	if a.cmd.Short != "" {
+		return a.cmd.Short
 	}
 	return "App"
 }

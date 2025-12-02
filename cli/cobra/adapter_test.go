@@ -9,16 +9,25 @@ import (
 func TestAdapter_GetName(t *testing.T) {
 	tests := []struct {
 		name     string
+		cmdShort string
 		cmdUse   string
 		expected string
 	}{
 		{
-			name:     "with use",
+			name:     "with short",
+			cmdShort: "数据处理工具",
+			cmdUse:   "abcd",
+			expected: "数据处理工具",
+		},
+		{
+			name:     "only use",
+			cmdShort: "",
 			cmdUse:   "myapp",
 			expected: "myapp",
 		},
 		{
-			name:     "empty use",
+			name:     "empty all",
+			cmdShort: "",
 			cmdUse:   "",
 			expected: "App",
 		},
@@ -27,7 +36,8 @@ func TestAdapter_GetName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := &cobra.Command{
-				Use: tt.cmdUse,
+				Use:   tt.cmdUse,
+				Short: tt.cmdShort,
 			}
 			adapter := NewAdapter(cmd)
 
@@ -86,8 +96,8 @@ func TestAdapter_GetFlags(t *testing.T) {
 	cmd.Flags().StringVarP(&host, "host", "H", "localhost", "Server host")
 
 	// 模拟用户修改了 port 和 debug
-	cmd.Flags().Set("port", "9000")
-	cmd.Flags().Set("debug", "true")
+	_ = cmd.Flags().Set("port", "9000")
+	_ = cmd.Flags().Set("debug", "true")
 
 	adapter := NewAdapter(cmd)
 	flags := adapter.GetFlags()
@@ -98,24 +108,25 @@ func TestAdapter_GetFlags(t *testing.T) {
 	}
 
 	// 检查 port flag
-	if portFlag, ok := flags["port"]; ok {
-		if portFlag.Name != "port" {
-			t.Errorf("expected name 'port', got %q", portFlag.Name)
-		}
-		if portFlag.Value != "9000" {
-			t.Errorf("expected value '9000', got %q", portFlag.Value)
-		}
-		if portFlag.DefaultValue != "8080" {
-			t.Errorf("expected default '8080', got %q", portFlag.DefaultValue)
-		}
-		if !portFlag.Changed {
-			t.Error("expected Changed to be true")
-		}
-		if portFlag.Type != "int" {
-			t.Errorf("expected type 'int', got %q", portFlag.Type)
-		}
-	} else {
+	portFlag, ok := flags["port"]
+	if !ok {
 		t.Error("port flag not found")
+		return
+	}
+	if portFlag.Name != "port" {
+		t.Errorf("expected name 'port', got %q", portFlag.Name)
+	}
+	if portFlag.Value != "9000" {
+		t.Errorf("expected value '9000', got %q", portFlag.Value)
+	}
+	if portFlag.DefaultValue != "8080" {
+		t.Errorf("expected default '8080', got %q", portFlag.DefaultValue)
+	}
+	if !portFlag.Changed {
+		t.Error("expected Changed to be true")
+	}
+	if portFlag.Type != "int" {
+		t.Errorf("expected type 'int', got %q", portFlag.Type)
 	}
 
 	// 检查 debug flag
@@ -146,6 +157,7 @@ func TestAdapter_GetFlags(t *testing.T) {
 func TestNewAdapter(t *testing.T) {
 	cmd := &cobra.Command{
 		Use:     "myapp",
+		Short:   "My Application",
 		Version: "1.0.0",
 	}
 
@@ -154,9 +166,9 @@ func TestNewAdapter(t *testing.T) {
 		t.Fatal("expected adapter to be non-nil")
 	}
 
-	// 验证实现了接口
-	if adapter.GetName() != "myapp" {
-		t.Errorf("expected name 'myapp', got %q", adapter.GetName())
+	// 验证 GetName 返回 Short
+	if adapter.GetName() != "My Application" {
+		t.Errorf("expected name 'My Application', got %q", adapter.GetName())
 	}
 	if adapter.GetVersion() != "1.0.0" {
 		t.Errorf("expected version '1.0.0', got %q", adapter.GetVersion())

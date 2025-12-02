@@ -1,14 +1,9 @@
-version: 2
+version: "2"
 
 run:
   timeout: 5m
   tests: true
   modules-download-mode: readonly
-  skip-dirs:
-    - examples
-  skip-files:
-    - ".*\\.pb\\.go$"
-    - ".*\\.gen\\.go$"
 
 linters:
   default: none
@@ -43,149 +38,146 @@ linters:
     - errorlint
     # Team specific
     - tagliatelle
-    - tagliatelle
     # - depguard # Disabled due to configuration issues
+  settings:
+    # ========== 错误处理 ==========
+    errcheck:
+      check-type-assertions: true
+      check-blank: false
+      exclude-functions:
+        - (io.Closer).Close
+        - (*database/sql.Rows).Close
+        - (io.ReadCloser).Close
+        - fmt.Fprintln
+        - fmt.Fprintf
+        - fmt.Print
+    # ========== 静态分析 ==========
+    govet:
+      enable:
+        - assign
+        - atomic
+        - bools
+        - buildtag
+        - cgocall
+        - composites
+        - copylocks
+        - errorsas
+        - httpresponse
+        - ifaceassert
+        - loopclosure
+        - lostcancel
+        - nilfunc
+        - printf
+        - shift
+        - stdmethods
+        - structtag
+        - tests
+        - unmarshal
+        - unreachable
+        - unsafeptr
+        - unusedresult
+      disable:
+        - shadow
+        - fieldalignment
+
+    # ========== 复杂度（中等严格）==========
+    gocyclo:
+      min-complexity: 15    # 与 Gin/Echo 一致
+
+    gocognit:
+      min-complexity: 20    # 认知复杂度
+
+    nestif:
+      min-complexity: 4     # 最多 4 层嵌套
+
+    # ========== 拼写检查 ==========
+    misspell:
+      locale: US
+      ignore-words:
+        - chinayin
+        - uhomes
+        - gox
+
+    # ========== 代码风格（中等严格）==========
+    revive:
+      rules:
+        - name: exported
+          severity: warning
+          disabled: false
+        - name: package-comments
+          severity: warning
+          disabled: false
+          arguments:
+            - disableStutteringCheck
+        - name: var-naming
+          severity: warning
+          disabled: false
+        - name: error-return
+          severity: warning
+          disabled: false
+        - name: error-strings
+          severity: warning
+          disabled: false
+        - name: receiver-naming
+          severity: warning
+          disabled: false
+
+    # ========== 代码质量 ==========
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+      disabled-checks:
+        - whyNoLint      # 要求解释 nolint 原因（可选）
+        - hugeParam      # 参数大小检查（太严格）
+        - rangeValCopy   # range 复制检查（太严格）
+
+    # ========== 安全检查 ==========
+    gosec:
+      excludes:
+        - G104
+      config:
+        global:
+          nosec: false
+          show-ignored: false
+          audit: false
+
+    # ========== 规范：JSON tag 命名（重要！）==========
+    tagliatelle:
+      case:
+        rules:
+          json: snake           # JSON 必须 snake_case
+          yaml: snake           # YAML 必须 snake_case
+          mapstructure: snake   # Mapstructure 必须 snake_case
+        use-field-name: false
+
+    # ========== 规范：依赖限制（重要！）==========
+    depguard:
+      rules:
+        DenyLog:
+          files:
+            - $all
+          deny:
+            - pkg: github.com/sirupsen/logrus
+              desc: "Use log/slog instead"
+            - pkg: log
+              desc: "Use log/slog instead"
 
 formatters:
   enable:
     - gofmt
     - gofumpt
     - goimports
-
-linters-settings:
-  # ========== 错误处理 ==========
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-    exclude-functions:
-      - (io.Closer).Close
-      - (*database/sql.Rows).Close
-      - (io.ReadCloser).Close
-  
-  # ========== 静态分析 ==========
-  govet:
-    enable:
-      - assign
-      - atomic
-      - bools
-      - buildtag
-      - cgocall
-      - composites
-      - copylocks
-      - errorsas
-      - httpresponse
-      - ifaceassert
-      - loopclosure
-      - lostcancel
-      - nilfunc
-      - printf
-      - shift
-      - stdmethods
-      - structtag
-      - tests
-      - unmarshal
-      - unreachable
-      - unsafeptr
-      - unusedresult
-    disable:
-      - shadow
-      - fieldalignment
-  
-  # ========== 复杂度（中等严格）==========
-  gocyclo:
-    min-complexity: 15    # 与 Gin/Echo 一致
-  
-  gocognit:
-    min-complexity: 20    # 认知复杂度
-  
-  nestif:
-    min-complexity: 4     # 最多 4 层嵌套
-  
-  # ========== 格式化配置 ==========
-  gofmt:
-    # 自动将 interface{} 替换为 any（Go 1.18+）
-    rewrite-rules:
-      - pattern: 'interface{}'
-        replacement: 'any'
-  
-  gofumpt:
-    # 启用额外的简化规则
-    extra-rules: true
-  
-  # ========== 拼写检查 ==========
-  misspell:
-    locale: US
-    ignore-words:
-      - chinayin
-      - uhomes
-      - gox
-  
-  # ========== 代码风格（中等严格）==========
-  revive:
-    ignore-generated-header: true
-    rules:
-      - name: exported
-        severity: warning
-        disabled: false
-      - name: package-comments
-        severity: warning
-        disabled: false
-        arguments:
-          - disableStutteringCheck
-      - name: var-naming
-        severity: warning
-        disabled: false
-      - name: error-return
-        severity: warning
-        disabled: false
-      - name: error-strings
-        severity: warning
-        disabled: false
-      - name: receiver-naming
-        severity: warning
-        disabled: false
-  
-  # ========== 代码质量 ==========
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - style
-      - performance
-    disabled-checks:
-      - whyNoLint      # 要求解释 nolint 原因（可选）
-      - hugeParam      # 参数大小检查（太严格）
-      - rangeValCopy   # range 复制检查（太严格）
-  
-  # ========== 安全检查 ==========
-  gosec:
-    excludes:
-      - G104
-    config:
-      global:
-        nosec: false
-        show-ignored: false
-        audit: false
-  
-  # ========== 规范：JSON tag 命名（重要！）==========
-  tagliatelle:
-    case:
-      rules:
-        json: snake           # JSON 必须 snake_case
-        yaml: snake           # YAML 必须 snake_case
-        mapstructure: snake   # Mapstructure 必须 snake_case
-      use-field-name: false
-  
-  # ========== 规范：依赖限制（重要！）==========
-  depguard:
-    rules:
-      DenyLog:
-        files:
-          - $all
-        deny:
-          - pkg: github.com/sirupsen/logrus
-            desc: "Use log/slog instead"
-          - pkg: log
-            desc: "Use log/slog instead"
+  settings:
+    gofmt:
+      # 自动将 interface{} 替换为 any（Go 1.18+）
+      rewrite-rules:
+        - pattern: 'interface{}'
+          replacement: 'any'
+    gofumpt:
+      # 启用额外的简化规则
+      extra-rules: true
 
 issues:
   max-issues-per-linter: 0
@@ -195,8 +187,12 @@ issues:
     - "Error return value of .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*print(f|ln)?|os\\.(Un)?Setenv). is not checked"
   exclude-dirs:
     - examples
+  exclude-rules:
+    - path: '(.+)_test\.go'
+      linters:
+        - errcheck
+        - gocritic
   exclude-files:
     - ".*\\.pb\\.go$"
     - ".*\\.gen\\.go$"
     - ".*_test\\.go$"
-

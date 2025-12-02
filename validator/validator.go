@@ -72,13 +72,13 @@ func Global() *Validator {
 }
 
 // Validate 验证结构体（使用全局验证器）
-func Validate(v interface{}) error {
+func Validate(v any) error {
 	return Global().Validate(v)
 }
 
 // Validate 验证结构体
 // 返回的错误已经翻译为当前 locale
-func (v *Validator) Validate(data interface{}) error {
+func (v *Validator) Validate(data any) error {
 	err := v.validate.Struct(data)
 	if err == nil {
 		return nil

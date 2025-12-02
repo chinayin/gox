@@ -24,8 +24,11 @@ func TestStartup(t *testing.T) {
 	output := buf.String()
 
 	// Check banner
-	if !strings.Contains(output, "TestApp v1.0.0") {
-		t.Errorf("expected app name and version in output")
+	if !strings.Contains(output, "TestApp (v1.0.0)") {
+		t.Errorf("expected app name and version in output, got: %s", output)
+	}
+	if !strings.Contains(output, "Command:") {
+		t.Errorf("expected Command line in output")
 	}
 
 	// Check section
@@ -164,8 +167,8 @@ func TestNewStartupWithAdapter(t *testing.T) {
 	output := buf.String()
 
 	// 验证从 adapter 获取的名称和版本
-	if !strings.Contains(output, "TestApp 2.0.0") {
-		t.Errorf("expected 'TestApp 2.0.0' in output, got: %s", output)
+	if !strings.Contains(output, "TestApp (2.0.0)") {
+		t.Errorf("expected 'TestApp (2.0.0)' in output, got: %s", output)
 	}
 
 	// 验证 adapter 已设置

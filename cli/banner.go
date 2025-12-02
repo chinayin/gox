@@ -104,9 +104,15 @@ func (s *Startup) AddEndpoint(name, url string) *Startup {
 
 // Print outputs all startup information.
 func (s *Startup) Print() {
-	// Banner
-	fmt.Fprintf(s.writer, "\n%s %s\n", s.name, s.version)
-	fmt.Fprintln(s.writer, strings.Repeat("-", 80))
+	// Banner - 显示应用名称和版本
+	fmt.Fprintf(s.writer, "\n%s (%s)\n", s.name, s.version)
+
+	// 显示完整命令行
+	if fullCmd := getFullCommand(); fullCmd != "" {
+		fmt.Fprintf(s.writer, "Command: %s\n", fullCmd)
+	}
+
+	fmt.Fprintf(s.writer, "%s\n", strings.Repeat("-", 80))
 
 	// Sections
 	for _, section := range s.sections {
@@ -115,16 +121,16 @@ func (s *Startup) Print() {
 
 	// Endpoints
 	if len(s.endpoints) > 0 {
-		fmt.Fprintln(s.writer, "\nServer Endpoints")
+		fmt.Fprintf(s.writer, "\nServer Endpoints\n")
 		for _, ep := range s.endpoints {
 			fmt.Fprintf(s.writer, "  %-20s %s\n", ep.Name+":", ep.URL)
 		}
 	}
 
 	// Footer
-	fmt.Fprintln(s.writer, strings.Repeat("-", 80))
+	fmt.Fprintf(s.writer, "%s\n", strings.Repeat("-", 80))
 	s.printSuccess("Server started successfully")
-	fmt.Fprint(s.writer, "  Press Ctrl+C to shutdown gracefully\n\n")
+	fmt.Fprintf(s.writer, "  Press Ctrl+C to shutdown gracefully\n\n")
 }
 
 // printSection outputs a section.
@@ -205,4 +211,9 @@ func supportsColor() bool {
 		return false
 	}
 	return term.IsTerminal(int(os.Stdout.Fd()))
+}
+
+// getFullCommand 获取完整命令行（包含所有参数）
+func getFullCommand() string {
+	return strings.Join(os.Args, " ")
 }

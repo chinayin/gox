@@ -1,6 +1,7 @@
 package zap
 
 import (
+	"os"
 	"testing"
 
 	"github.com/chinayin/gox/log"
@@ -93,5 +94,71 @@ func TestParseLevel(t *testing.T) {
 				t.Errorf("parseLevel(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 		})
+	}
+}
+
+func TestEnsureOutputDir(t *testing.T) {
+	tests := []struct {
+		name      string
+		output    string
+		shouldErr bool
+	}{
+		{
+			name:      "stdout",
+			output:    log.OutputStdout,
+			shouldErr: false,
+		},
+		{
+			name:      "stderr",
+			output:    log.OutputStderr,
+			shouldErr: false,
+		},
+		{
+			name:      "file with nested dirs",
+			output:    t.TempDir() + "/logs/app/test.log",
+			shouldErr: false,
+		},
+		{
+			name:      "current dir",
+			output:    "test.log",
+			shouldErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := log.EnsureOutputDir(tt.output)
+			if (err != nil) != tt.shouldErr {
+				t.Errorf("expected error: %v, got: %v", tt.shouldErr, err)
+			}
+		})
+	}
+}
+
+func TestNewHandler_WithFileOutput(t *testing.T) {
+	tmpDir := t.TempDir()
+	logFile := tmpDir + "/logs/nested/app.log"
+
+	opts := log.Options{
+		Level:  log.LevelInfo,
+		Format: log.FormatJSON,
+		Output: logFile,
+	}
+
+	handler, err := NewHandler(opts)
+	if err != nil {
+		t.Fatalf("failed to create handler: %v", err)
+	}
+
+	if handler == nil {
+		t.Fatal("handler should not be nil")
+	}
+
+	// 验证目录已创建
+	dirPath := tmpDir + "/logs/nested"
+	if info, err := os.Stat(dirPath); err != nil {
+		t.Errorf("directory should be created: %v", err)
+	} else if !info.IsDir() {
+		t.Errorf("%s should be a directory", dirPath)
 	}
 }

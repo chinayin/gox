@@ -29,6 +29,12 @@ func NewHandler(opts log.Options) (slog.Handler, error) {
 	if output == "" {
 		output = log.OutputStdout
 	}
+
+	// 如果是文件路径，确保目录存在
+	if err := log.EnsureOutputDir(output); err != nil {
+		return nil, err
+	}
+
 	zapConfig.OutputPaths = []string{output}
 	zapConfig.ErrorOutputPaths = []string{output}
 
