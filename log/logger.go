@@ -1,141 +1,75 @@
 package log
 
 import (
+	"fmt"
+	"io"
 	"log/slog"
 	"os"
-	"path/filepath"
-
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
-// Options 日志配置选项
-type Options struct {
-	Level      string // 日志级别: debug, info, warn, error
-	OutputPath string // 输出路径，空字符串表示输出到 stdout
-	Format     string // 格式: json, console
-	Color      string // 颜色: auto(默认), always, never, no
-}
-
-// DefaultOptions 返回默认配置
-func DefaultOptions() Options {
-	return Options{
-		Level:      "info",
-		OutputPath: "",
-		Format:     "console",
-		Color:      "auto",
-	}
-}
-
-// New 创建新的 slog.Logger，底层使用 zap 实现
+// New 创建 slog.Logger，使用标准库实现
+// 这是默认实现，无外部依赖
 func New(opts Options) (*slog.Logger, error) {
-	// 解析日志级别
-	lvl, err := parseLevel(opts.Level)
+	// 解析级别
+	level := parseLevel(opts.Level)
+
+	// 配置 HandlerOptions
+	handlerOpts := &slog.HandlerOptions{
+		Level: level,
+	}
+
+	// 选择输出
+	writer, err := getWriter(opts.Output)
 	if err != nil {
 		return nil, err
 	}
 
-	// 配置编码器
-	cfg := zapcore.EncoderConfig{
-		TimeKey:        "timestamp",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		FunctionKey:    zapcore.OmitKey,
-		MessageKey:     "message",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.LowercaseLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
+	// 选择格式
+	handler := slog.Handler(nil)
+	if opts.Format == FormatJSON {
+		handler = slog.NewJSONHandler(writer, handlerOpts)
+	} else {
+		handler = slog.NewTextHandler(writer, handlerOpts)
 	}
 
-	// 配置输出
-	ws, err := getWriteSyncer(opts)
-	if err != nil {
-		return nil, err
-	}
-
-	// 配置编码器
-	enc := getEncoder(opts, cfg)
-
-	// 创建 zap core
-	core := zapcore.NewCore(enc, ws, lvl)
-
-	// 创建 zap logger
-	zl := zap.New(core, zap.AddStacktrace(zapcore.ErrorLevel))
-
-	// 创建 slog Handler
-	h := NewZapHandler(zl, lvl)
-
-	// 创建 slog.Logger
-	return slog.New(h), nil
+	return slog.New(handler), nil
 }
 
-func getWriteSyncer(opts Options) (zapcore.WriteSyncer, error) {
-	if opts.OutputPath == "" {
-		return zapcore.AddSync(os.Stdout), nil
-	}
-
-	dir := filepath.Dir(opts.OutputPath)
-	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:gosec
-		return nil, err
-	}
-
-	f, err := os.OpenFile(opts.OutputPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644) //nolint:gosec
-	if err != nil {
-		return nil, err
-	}
-	return zapcore.AddSync(f), nil
+// NewWithHandler 使用自定义 Handler 创建 Logger
+// 类似 cli.NewStartupWithAdapter
+func NewWithHandler(handler slog.Handler) *slog.Logger {
+	return slog.New(handler)
 }
 
-func getEncoder(opts Options, cfg zapcore.EncoderConfig) zapcore.Encoder {
-	if opts.Format == "json" {
-		return zapcore.NewJSONEncoder(cfg)
-	}
+// slogLevelMap 日志级别映射表
+var slogLevelMap = map[string]slog.Level{
+	LevelDebug: slog.LevelDebug,
+	LevelInfo:  slog.LevelInfo,
+	LevelWarn:  slog.LevelWarn,
+	LevelError: slog.LevelError,
+}
 
-	cfg.EncodeLevel = zapcore.CapitalLevelEncoder
-	if shouldUseColor(opts) {
-		cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+// getWriter 根据 Output 获取输出目标
+func getWriter(output string) (io.Writer, error) {
+	switch output {
+	case OutputStdout, "":
+		return os.Stdout, nil
+	case OutputStderr:
+		return os.Stderr, nil
+	default:
+		// 文件路径
+		f, err := os.OpenFile(output, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open log file: %w", err)
+		}
+		return f, nil
 	}
-	return zapcore.NewConsoleEncoder(cfg)
 }
 
 // parseLevel 解析日志级别
-func parseLevel(level string) (zapcore.Level, error) {
-	switch level {
-	case "debug":
-		return zapcore.DebugLevel, nil
-	case "info":
-		return zapcore.InfoLevel, nil
-	case "warn":
-		return zapcore.WarnLevel, nil
-	case "error":
-		return zapcore.ErrorLevel, nil
-	default:
-		return zapcore.InfoLevel, nil
+func parseLevel(level string) slog.Level {
+	if lvl, ok := slogLevelMap[level]; ok {
+		return lvl
 	}
-}
-
-// shouldUseColor 判断是否应该使用颜色
-func shouldUseColor(opts Options) bool {
-	switch opts.Color {
-	case "always":
-		return true
-	case "never", "no":
-		return false
-	case "auto", "":
-		// auto: 输出到终端时启用颜色
-		if opts.OutputPath != "" {
-			return false // 文件输出不使用颜色
-		}
-		// 检查 stdout 是否是终端
-		if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
-			return true
-		}
-		return false
-	default:
-		return false
-	}
+	return slog.LevelInfo
 }

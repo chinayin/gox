@@ -6,22 +6,31 @@
 
 A collection of useful Go extensions and utilities for internal use.
 
-## Features
+## Packages
 
-- **errors** - Enhanced error handling utilities (Planned)
-- **strings** - String manipulation helpers (Planned)
-- **slices** - Slice operation utilities (Planned)
-- **maps** - Map operation utilities (Planned)
-- **sync** - Concurrency utilities and safe data structures (Planned)
-- **time** - Time and date utilities (Planned)
-- **crypto** - Cryptography and hashing utilities (Planned)
-- **net** - Network utilities (HTTP client, IP helpers) (Planned)
-- **encoding** - Encoding/decoding utilities (JSON, XML) (Planned)
-- **config** - Configuration management utilities
-- **validator** - Data validation utilities
-- **retry** - Retry mechanism with backoff strategies (Planned)
-- **cache** - In-memory caching solutions (Planned)
-- **log** - Logging utilities
+### Available
+
+- **[cli](cli/)** - Command-line output formatting with adapter support
+  - Professional startup banners
+  - Cobra adapter for auto-extracting CLI parameters
+  - Extensible for other CLI frameworks
+- **[config](config/)** - Configuration management utilities
+- **[log](log/)** - Logging utilities
+- **[validator](validator/)** - Data validation utilities
+
+### Planned
+
+- **errors** - Enhanced error handling utilities
+- **strings** - String manipulation helpers
+- **slices** - Slice operation utilities
+- **maps** - Map operation utilities
+- **sync** - Concurrency utilities and safe data structures
+- **time** - Time and date utilities
+- **crypto** - Cryptography and hashing utilities
+- **net** - Network utilities (HTTP client, IP helpers)
+- **encoding** - Encoding/decoding utilities (JSON, XML)
+- **retry** - Retry mechanism with backoff strategies
+- **cache** - In-memory caching solutions
 
 ## Installation
 

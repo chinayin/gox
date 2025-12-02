@@ -1,54 +1,93 @@
-// Package log provides logging functionality based on slog interface, implemented with zap.
+// Package log provides logging functionality based on slog interface.
 //
-// Design Philosophy:
-//   - Uses standard library log/slog interface for API standardization and portability
-//   - Implemented with zap for high performance and rich features
-//   - Connects slog and zap through Handler adapter pattern
+// This package provides a simple wrapper around the standard library log/slog
+// with convenient configuration options. By default, it uses the standard library
+// implementation with no external dependencies.
 //
-// Basic Usage:
+// For high-performance logging, use the zap adapter which wraps the official
+// go.uber.org/zap/exp/zapslog implementation.
+//
+// # Basic Usage (Standard Library)
+//
+//	import "github.com/chinayin/gox/log"
 //
 //	logger, err := log.New(log.Options{
-//	    Level:      "info",
-//	    OutputPath: "",        // empty string means stdout
-//	    Format:     "console", // or "json"
-//	    Color:      "auto",    // auto(default), always, never, no
+//		Level:  log.LevelInfo,
+//		Format: log.FormatConsole,
+//		Output: log.OutputStdout,
 //	})
 //	if err != nil {
-//	    panic(err)
+//		panic(err)
 //	}
 //
-//	// Use standard slog API
-//	logger.Info("application started")
+//	logger.Info("application started", "port", 8080)
 //	logger.Debug("debug message", "key", "value")
 //	logger.Error("error occurred", "error", err)
 //
-// Structured Logging:
+// # Using Zap Adapter (High Performance)
 //
-//	logger.Info("user login",
-//	    "user_id", 123,
-//	    "username", "john",
-//	    "ip", "192.168.1.1")
-//
-//	// Using groups
-//	logger.Info("request completed",
-//	    slog.Group("request",
-//	        "method", "POST",
-//	        "path", "/api/users",
-//	    ),
+//	import (
+//		"github.com/chinayin/gox/log"
+//		zaplog "github.com/chinayin/gox/log/zap"
 //	)
 //
-// Adding Context Fields:
+//	// Method 1: Direct creation
+//	logger, err := zaplog.New(log.Options{
+//		Level:  log.LevelInfo,
+//		Format: log.FormatJSON,
+//		Output: log.OutputStdout,
+//	})
 //
-//	// Use With to add persistent fields
-//	requestLogger := logger.With(
-//	    "request_id", "abc123",
-//	    "method", "GET")
-//	requestLogger.Info("processing request")
+//	// Method 2: Using NewWithHandler (similar to cli.NewStartupWithAdapter)
+//	handler, err := zaplog.NewHandler(log.DefaultOptions())
+//	logger := log.NewWithHandler(handler)
 //
-// Performance Characteristics:
-//   - Zero-allocation structured logging (in most cases)
-//   - Supports log level filtering
-//   - Supports colored console output and JSON format
-//   - Automatically adds caller information
-//   - Automatically adds stack trace for Error level
+// # Configuration Options
+//
+// Level constants:
+//   - log.LevelDebug - Debug level
+//   - log.LevelInfo  - Info level (default)
+//   - log.LevelWarn  - Warning level
+//   - log.LevelError - Error level
+//
+// Format constants:
+//   - log.FormatJSON    - JSON format (K8s standard)
+//   - log.FormatConsole - Console format (human-readable)
+//
+// Output constants:
+//   - log.OutputStdout - Standard output (K8s standard)
+//   - log.OutputStderr - Standard error
+//   - "/path/to/file"  - File path
+//
+// # Kubernetes Deployment
+//
+//	// Production: JSON to stdout for log collection
+//	logger, _ := log.New(log.Options{
+//		Level:  log.LevelInfo,
+//		Format: log.FormatJSON,
+//		Output: log.OutputStdout,
+//	})
+//
+// # Local Development
+//
+//	// Development: Console format for readability
+//	logger, _ := log.New(log.Options{
+//		Level:  log.LevelDebug,
+//		Format: log.FormatConsole,
+//		Output: log.OutputStdout,
+//	})
+//
+// # File Output
+//
+//	// Traditional deployment: Write to file
+//	logger, _ := log.New(log.Options{
+//		Level:  log.LevelInfo,
+//		Format: log.FormatJSON,
+//		Output: "/var/log/app.log",
+//	})
+//
+// # Architecture
+//
+//	Default:  log.New() → slog.Handler (stdlib) → no dependencies
+//	With Zap: zaplog.New() → zapslog.Handler → zap (high-perf)
 package log

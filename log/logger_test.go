@@ -1,6 +1,9 @@
 package log
 
 import (
+	"bytes"
+	"log/slog"
+	"strings"
 	"testing"
 )
 
@@ -11,27 +14,32 @@ func TestNew(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "default options",
-			opts:    DefaultOptions(),
-			wantErr: false,
-		},
-		{
-			name: "debug level",
-			opts: Options{
-				Level:      "debug",
-				OutputPath: "",
-				Format:     "console",
-			},
-			wantErr: false,
+			name: "default options",
+			opts: DefaultOptions(),
 		},
 		{
 			name: "json format",
 			opts: Options{
-				Level:      "info",
-				OutputPath: "",
-				Format:     "json",
+				Level:  LevelInfo,
+				Format: FormatJSON,
+				Output: OutputStdout,
 			},
-			wantErr: false,
+		},
+		{
+			name: "debug level",
+			opts: Options{
+				Level:  LevelDebug,
+				Format: FormatConsole,
+				Output: OutputStdout,
+			},
+		},
+		{
+			name: "stderr output",
+			opts: Options{
+				Level:  LevelInfo,
+				Format: FormatJSON,
+				Output: OutputStderr,
+			},
 		},
 	}
 
@@ -42,38 +50,48 @@ func TestNew(t *testing.T) {
 				t.Errorf("New() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !tt.wantErr && logger == nil {
+			if logger == nil {
 				t.Error("New() returned nil logger")
 			}
 		})
 	}
 }
 
-func TestLogger_BasicLogging(t *testing.T) {
-	logger, err := New(Options{
-		Level:      "debug",
-		OutputPath: "",
-		Format:     "console",
-	})
-	if err != nil {
-		t.Fatal(err)
+func TestNewWithHandler(t *testing.T) {
+	var buf bytes.Buffer
+	handler := slog.NewTextHandler(&buf, nil)
+
+	logger := NewWithHandler(handler)
+	if logger == nil {
+		t.Fatal("NewWithHandler() returned nil")
 	}
 
-	// 测试基本日志记录
-	logger.Debug("debug message", "key", "value")
-	logger.Info("info message", "count", 42)
-	logger.Warn("warn message", "flag", true)
-	logger.Error("error message", "error", "test error")
+	logger.Info("test message")
+
+	output := buf.String()
+	if !strings.Contains(output, "test message") {
+		t.Errorf("expected log output to contain 'test message', got: %s", output)
+	}
 }
 
-func TestLogger_With(t *testing.T) {
-	logger, err := New(DefaultOptions())
-	if err != nil {
-		t.Fatal(err)
+func TestParseLevel(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected slog.Level
+	}{
+		{"debug", slog.LevelDebug},
+		{"info", slog.LevelInfo},
+		{"warn", slog.LevelWarn},
+		{"error", slog.LevelError},
+		{"invalid", slog.LevelInfo}, // default
 	}
 
-	// 测试 With 方法
-	contextLogger := logger.With("request_id", "abc123", "user_id", 456)
-	contextLogger.Info("processing request")
-	contextLogger.Debug("debug info")
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := parseLevel(tt.input)
+			if result != tt.expected {
+				t.Errorf("parseLevel(%q) = %v, want %v", tt.input, result, tt.expected)
+			}
+		})
+	}
 }
