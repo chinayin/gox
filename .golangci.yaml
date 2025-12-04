@@ -196,6 +196,8 @@ linters:
     rules:
       - path: '(.+)_test\.go'
         linters:
+          - errcheck
+          - gocritic
           - gocyclo
           - gocognit
           - nestif
