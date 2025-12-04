@@ -59,7 +59,6 @@ linters:
         - bools
         - buildtag
         - cgocall
-        - composites
         - copylocks
         - errorsas
         - httpresponse
@@ -76,6 +75,13 @@ linters:
         - unreachable
         - unsafeptr
         - unusedresult
+        # 高价值扩展检查
+        - nilness
+        - sortslice
+        - stringintconv
+        - sigchanyzer
+        - reflectvaluecompare
+        - testinggoroutine
       disable:
         - shadow
         - fieldalignment
@@ -93,25 +99,28 @@ linters:
     # ========== 拼写检查 ==========
     misspell:
       locale: US
-      ignore-words:
+      ignore-rules:
         - chinayin
         - uhomes
         - gox
 
     # ========== 代码风格（中等严格）==========
     revive:
+      enable-all-rules: false
       rules:
-        - name: exported
-          severity: warning
-          disabled: false
-        - name: package-comments
-          severity: warning
-          disabled: false
-          arguments:
-            - disableStutteringCheck
-        - name: var-naming
-          severity: warning
-          disabled: false
+        # 检查bug
+        - name: atomic
+        - name: context-keys-type
+        - name: defer
+          arguments: [[ "immediate-recover", "recover", "return" ]]
+        - name: duplicated-imports
+        - name: errorf
+        - name: string-of-int
+        - name: time-equal
+        - name: unconditional-recursion
+        - name: useless-break
+        - name: waitgroup-by-value
+        # 代码风格
         - name: error-return
           severity: warning
           disabled: false
@@ -121,6 +130,19 @@ linters:
         - name: receiver-naming
           severity: warning
           disabled: false
+        # 变量风格
+        - name: var-naming
+          severity: warning
+          disabled: false
+        # 严格风格
+        - name: exported
+          severity: warning
+          disabled: false
+        - name: package-comments
+          severity: warning
+          disabled: false
+          arguments:
+            - disableStutteringCheck
 
     # ========== 代码质量 ==========
     gocritic:
@@ -164,6 +186,24 @@ linters:
             - pkg: log
               desc: "Use log/slog instead"
 
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: '(.+)_test\.go'
+        linters:
+          - gocyclo
+          - gocognit
+          - nestif
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
 formatters:
   enable:
     - gofmt
@@ -173,26 +213,19 @@ formatters:
     gofmt:
       # 自动将 interface{} 替换为 any（Go 1.18+）
       rewrite-rules:
-        - pattern: 'interface{}'
-          replacement: 'any'
+        - pattern: interface{}
+          replacement: any
     gofumpt:
       # 启用额外的简化规则
       extra-rules: true
+  exclusions:
+    # 对自动生成的代码（generated files）采取 宽松模式（lax）
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude-generated-strict: false
-  exclude:
-    - "Error return value of .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*print(f|ln)?|os\\.(Un)?Setenv). is not checked"
-  exclude-dirs:
-    - examples
-  exclude-rules:
-    - path: '(.+)_test\.go'
-      linters:
-        - errcheck
-        - gocritic
-  exclude-files:
-    - ".*\\.pb\\.go$"
-    - ".*\\.gen\\.go$"
-    - ".*_test\\.go$"
