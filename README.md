@@ -2,7 +2,11 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/chinayin/gox.svg)](https://pkg.go.dev/github.com/chinayin/gox)
 [![Go Report Card](https://goreportcard.com/badge/github.com/chinayin/gox)](https://goreportcard.com/report/github.com/chinayin/gox)
-[![CI](https://github.com/chinayin/gox/workflows/CI/badge.svg)](https://github.com/chinayin/gox/actions)
+[![Lint](https://github.com/chinayin/gox/workflows/Lint/badge.svg)](https://github.com/chinayin/gox/actions)
+[![Test](https://github.com/chinayin/gox/workflows/Test/badge.svg)](https://github.com/chinayin/gox/actions)
+[![Build](https://github.com/chinayin/gox/workflows/Build/badge.svg)](https://github.com/chinayin/gox/actions)
+[![codecov](https://codecov.io/gh/chinayin/gox/branch/main/graph/badge.svg)](https://codecov.io/gh/chinayin/gox)
+[![License](https://img.shields.io/github/license/chinayin/gox)](LICENSE)
 
 A collection of useful Go extensions and utilities for internal use.
 
