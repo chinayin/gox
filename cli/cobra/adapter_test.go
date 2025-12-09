@@ -16,19 +16,16 @@ func TestAdapter_GetName(t *testing.T) {
 		{
 			name:     "with short",
 			cmdShort: "数据处理工具",
-			cmdUse:   "abcd",
 			expected: "数据处理工具",
 		},
 		{
 			name:     "only use",
-			cmdShort: "",
-			cmdUse:   "myapp",
+			cmdShort: "myapp",
 			expected: "myapp",
 		},
 		{
 			name:     "empty all",
 			cmdShort: "",
-			cmdUse:   "",
 			expected: "App",
 		},
 	}
