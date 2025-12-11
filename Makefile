@@ -1,4 +1,4 @@
-.PHONY: help test lint lint-fix fmt vet tidy clean coverage install-tools check-tools check
+.PHONY: help test lint lint-fix fmt tidy clean coverage install-tools check-tools check
 
 # Default target
 help:
@@ -7,21 +7,16 @@ help:
 	@echo "  make lint          - Run linter"
 	@echo "  make lint-fix      - Run linter with auto-fix"
 	@echo "  make fmt           - Format code"
-	@echo "  make vet           - Run go vet"
 	@echo "  make tidy          - Tidy go modules"
 	@echo "  make coverage      - Generate coverage report"
 	@echo "  make clean         - Clean build artifacts"
 	@echo "  make install-tools - Install required tools"
-	@echo "  make check         - Run all checks (fmt, vet, lint, test)"
+	@echo "  make check         - Run all checks (fmt, lint, test)"
 
 # Check if required tools are installed
 check-tools:
 	@command -v golangci-lint >/dev/null || { \
 		echo "Error: golangci-lint not found. Run 'make install-tools' first."; \
-		exit 1; \
-	}
-	@command -v gofumpt >/dev/null || { \
-		echo "Error: gofumpt not found. Run 'make install-tools' first."; \
 		exit 1; \
 	}
 
@@ -31,9 +26,6 @@ install-tools:
 	@command -v golangci-lint >/dev/null || \
 		(command -v brew >/dev/null && brew install golangci-lint) || \
 		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	@command -v gofumpt >/dev/null || \
-		(command -v brew >/dev/null && brew install gofumpt) || \
-		go install mvdan.cc/gofumpt@latest
 	@echo "Done!"
 
 # Run tests
@@ -59,10 +51,7 @@ lint-fix: check-tools
 	@golangci-lint run --fix ./...
 
 # Format code
-fmt: check-tools
-	@echo "Formatting code..."
-	@go fmt ./...
-	@gofumpt -l -w .
+fmt: lint-fix
 	@echo "Code formatted successfully!"
 
 # Run go vet
@@ -84,5 +73,5 @@ clean:
 	@echo "Clean complete!"
 
 # Run all checks
-check: fmt vet lint test
+check: fmt lint test
 	@echo "All checks passed!"
