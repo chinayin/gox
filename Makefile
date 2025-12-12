@@ -11,7 +11,8 @@ help:
 	@echo "  make coverage      - Generate coverage report"
 	@echo "  make clean         - Clean build artifacts"
 	@echo "  make install-tools - Install required tools"
-	@echo "  make check         - Run all checks (fmt, lint, test)"
+	@echo "  make check         - Run full checks for local dev (fmt + lint + test)"
+	@echo "  make ci-check      - Run checks for CI (lint + test)"
 
 # Check if required tools are installed
 check-tools:
@@ -75,3 +76,6 @@ clean:
 # Run all checks
 check: fmt lint test
 	@echo "All checks passed!"
+
+ci-check: lint test
+	@echo "All CI checks passed!"
