@@ -23,16 +23,18 @@ const (
 
 // Options 日志配置选项
 type Options struct {
-	Level  string // 日志级别: debug, info, warn, error
-	Format string // 日志格式: json, console
-	Output string // 输出目标: stdout, stderr, /path/to/file
+	Level     string // 日志级别: debug, info, warn, error
+	Format    string // 日志格式: json, console
+	Output    string // 输出目标: stdout, stderr, /path/to/file
+	AddCaller bool   // 是否添加调用位置信息，默认 true
 }
 
 // DefaultOptions 返回默认配置
 func DefaultOptions() Options {
 	return Options{
-		Level:  LevelInfo,
-		Format: FormatJSON,
-		Output: OutputStdout,
+		Level:     LevelInfo,
+		Format:    FormatConsole,
+		Output:    OutputStdout,
+		AddCaller: true,
 	}
 }

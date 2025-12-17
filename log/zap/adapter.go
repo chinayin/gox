@@ -38,17 +38,21 @@ func NewHandler(opts log.Options) (slog.Handler, error) {
 	zapConfig.OutputPaths = []string{output}
 	zapConfig.ErrorOutputPaths = []string{output}
 
-	// 4. 创建 zap logger
-	zapLogger, err := zapConfig.Build(
-		zap.AddCaller(),
+	// 4. 创建 zap logger，根据 AddCaller 配置决定是否添加 caller
+	zapOpts := []zap.Option{
 		zap.AddStacktrace(zapcore.ErrorLevel),
-	)
+	}
+	if opts.AddCaller {
+		zapOpts = append(zapOpts, zap.AddCaller())
+	}
+
+	zapLogger, err := zapConfig.Build(zapOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	// 5. 使用官方 zapslog 适配器，启用 caller 信息
-	return zapslog.NewHandler(zapLogger.Core(), zapslog.WithCaller(true)), nil
+	// 5. 使用官方 zapslog 适配器，根据 AddCaller 配置启用 caller 信息
+	return zapslog.NewHandler(zapLogger.Core(), zapslog.WithCaller(opts.AddCaller)), nil
 }
 
 // New 便捷函数：创建使用 zap 的 Logger

@@ -34,7 +34,8 @@ func New(opts Options) (*Logger, error) {
 
 	// 配置 HandlerOptions
 	handlerOpts := &slog.HandlerOptions{
-		Level: level,
+		Level:     level,
+		AddSource: opts.AddCaller,
 	}
 
 	// 选择输出
