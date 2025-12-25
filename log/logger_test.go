@@ -75,6 +75,19 @@ func TestNewWithHandler(t *testing.T) {
 	}
 }
 
+func TestNewNop(t *testing.T) {
+	logger := NewNop()
+	if logger == nil {
+		t.Fatal("NewNop() returned nil")
+	}
+	defer logger.Close()
+
+	// 捕获 stdout/stderr 比较困难，因为 slog 直接写入 io.Discard
+	// 这里主要验证调用不 panic，且资源管理正常
+	logger.Info("this should be discarded")
+	logger.Error("this should also be discarded")
+}
+
 func TestParseLevel(t *testing.T) {
 	tests := []struct {
 		input    string

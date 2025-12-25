@@ -64,6 +64,15 @@ func NewWithHandler(handler slog.Handler) *slog.Logger {
 	return slog.New(handler)
 }
 
+// NewNop 返回一个静默的 Logger，所有的日志输出都会被丢弃
+// 常用于单元测试或不想输出日志的场景
+func NewNop() *Logger {
+	return &Logger{
+		Logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),
+		cleanup: func() {},
+	}
+}
+
 // slogLevelMap 日志级别映射表
 var slogLevelMap = map[string]slog.Level{
 	LevelDebug: slog.LevelDebug,
