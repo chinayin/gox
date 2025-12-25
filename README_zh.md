@@ -4,24 +4,34 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/chinayin/gox)](https://goreportcard.com/report/github.com/chinayin/gox)
 [![CI](https://github.com/chinayin/gox/workflows/CI/badge.svg)](https://github.com/chinayin/gox/actions)
 
-公司内部使用的 Go 扩展工具集合。
+生产级 Go 工具集：配置管理、数据验证、日志记录等核心工具，助力高效开发。
 
 ## 功能特性
 
-- **errors** - 增强的错误处理工具 (计划中)
-- **strings** - 字符串操作辅助函数 (计划中)
-- **slices** - 切片操作工具 (计划中)
-- **maps** - Map 操作工具 (计划中)
-- **sync** - 并发工具和线程安全数据结构 (计划中)
-- **time** - 时间日期工具 (计划中)
-- **crypto** - 加密和哈希工具 (计划中)
-- **net** - 网络工具（HTTP 客户端、IP 辅助函数）(计划中)
-- **encoding** - 编码/解码工具（JSON、XML）(计划中)
-- **config** - 配置管理工具
-- **validator** - 数据验证工具
-- **retry** - 重试机制（支持退避策略）(计划中)
-- **cache** - 内存缓存方案 (计划中)
-- **log** - 日志工具
+### 已发布
+
+- **[cli](cli/)** - 命令行输出格式化与适配器支持
+  - 专业启动横幅
+  - Cobra 适配器自动提取 CLI 参数
+  - 可扩展支持其他 CLI 框架
+- **[config](config/)** - 配置管理工具
+- **[log](log/)** - 日志工具
+- **[idgen](idgen/)** - 统一 ID 生成器
+- **[validator](validator/)** - 数据验证工具
+
+### 计划中
+
+- **errors** - 增强的错误处理工具
+- **strings** - 字符串操作辅助函数
+- **slices** - 切片操作工具
+- **maps** - Map 操作工具
+- **sync** - 并发工具和线程安全数据结构
+- **time** - 时间日期工具
+- **crypto** - 加密和哈希工具
+- **net** - 网络工具（HTTP 客户端、IP 辅助函数）
+- **encoding** - 编码/解码工具（JSON、XML）
+- **retry** - 重试机制（支持退避策略）
+- **cache** - 内存缓存方案
 
 ## 安装
 

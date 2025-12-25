@@ -8,7 +8,7 @@
 [![codecov](https://codecov.io/gh/chinayin/gox/branch/main/graph/badge.svg)](https://codecov.io/gh/chinayin/gox)
 [![License](https://img.shields.io/github/license/chinayin/gox)](LICENSE)
 
-A collection of useful Go extensions and utilities for internal use.
+A collection of production-ready Go utilities: config management, validation, logging, and more essential tools to boost your development.
 
 ## Packages
 
@@ -20,6 +20,7 @@ A collection of useful Go extensions and utilities for internal use.
   - Extensible for other CLI frameworks
 - **[config](config/)** - Configuration management utilities
 - **[log](log/)** - Logging utilities
+- **[idgen](idgen/)** - Unified ID generation utilities
 - **[validator](validator/)** - Data validation utilities
 
 ### Planned
