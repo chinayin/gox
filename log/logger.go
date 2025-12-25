@@ -90,7 +90,7 @@ func getWriter(output string) (io.Writer, func(), error) {
 		// #nosec G304 -- output 来自配置文件，由用户控制
 		f, err := os.OpenFile(output, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to open log file: %w", err)
+			return nil, nil, fmt.Errorf("%w: %w", ErrOpenFile, err)
 		}
 
 		// 返回文件和 cleanup 函数

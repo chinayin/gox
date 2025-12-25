@@ -57,7 +57,7 @@ func (l *Loader) Load(path string, config any) error {
 	// 2. 加载主配置文件
 	l.v.SetConfigFile(path)
 	if err := l.v.ReadInConfig(); err != nil {
-		return fmt.Errorf("failed to read config file %s: %w", path, err)
+		return fmt.Errorf("%w: %s (%w)", ErrReadFailed, path, err)
 	}
 
 	// 3. 尝试加载 .local.yaml 覆盖配置
@@ -67,13 +67,13 @@ func (l *Loader) Load(path string, config any) error {
 
 	// 4. 解析到结构体
 	if err := l.v.Unmarshal(config); err != nil {
-		return fmt.Errorf("failed to unmarshal config: %w", err)
+		return fmt.Errorf("%w: %w", ErrUnmarshalFailed, err)
 	}
 
 	// 5. 验证配置（如果配置实现了 Validatable 接口）
 	if validatable, ok := config.(Validatable); ok {
 		if err := validatable.Validate(); err != nil {
-			return fmt.Errorf("validation failed: %w", err)
+			return fmt.Errorf("%w: %w", ErrValidationFailed, err)
 		}
 	}
 
@@ -85,7 +85,7 @@ func (l *Loader) Load(path string, config any) error {
 func (l *Loader) LoadDirectory(dir string, configType any) ([]any, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read directory %s: %w", dir, err)
+		return nil, fmt.Errorf("%w: %s (%w)", ErrReadFailed, dir, err)
 	}
 
 	configs := make([]any, 0, len(entries))
@@ -106,14 +106,14 @@ func (l *Loader) LoadDirectory(dir string, configType any) ([]any, error) {
 		// 创建新的 loader 实例，继承当前 loader 的选项
 		loader := l.clone()
 		if err := loader.Load(configPath, cfg); err != nil {
-			return nil, fmt.Errorf("failed to load config %s: %w", configPath, err)
+			return nil, fmt.Errorf("%w: %s (%w)", ErrReadFailed, configPath, err)
 		}
 
 		configs = append(configs, cfg)
 	}
 
 	if len(configs) == 0 {
-		return nil, fmt.Errorf("no config files found in directory %s", dir)
+		return nil, fmt.Errorf("%w: %s", ErrNotFound, dir)
 	}
 
 	return configs, nil
@@ -166,11 +166,11 @@ func (l *Loader) loadLocalConfig(path string) error {
 	localViper := viper.New()
 	localViper.SetConfigFile(localPath)
 	if err := localViper.ReadInConfig(); err != nil {
-		return fmt.Errorf("failed to read local config file %s: %w", localPath, err)
+		return fmt.Errorf("%w: %s (%w)", ErrReadFailed, localPath, err)
 	}
 
 	if err := l.v.MergeConfigMap(localViper.AllSettings()); err != nil {
-		return fmt.Errorf("failed to merge local config: %w", err)
+		return fmt.Errorf("%w: %w", ErrMergeFailed, err)
 	}
 
 	return nil

@@ -108,7 +108,7 @@ func (v *Validator) RegisterValidation(tag string, fn validator.Func) error {
 func (v *Validator) SetLocale(locale string) error {
 	trans, found := v.uni.GetTranslator(locale)
 	if !found {
-		return fmt.Errorf("locale '%s' not found", locale)
+		return fmt.Errorf("%w: %s", ErrLocaleNotFound, locale)
 	}
 
 	v.translator = trans
