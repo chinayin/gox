@@ -70,8 +70,8 @@ func TestNewSnowflake_Default(t *testing.T) {
 	if !ok {
 		t.Fatal("failed to unwrap snowflake.ID")
 	}
-	if sf.Node() != DefaultNodeID { //nolint:staticcheck // testing deprecated function
-		t.Errorf("default nodeID = %v, want %v", sf.Node(), DefaultNodeID) //nolint:staticcheck // testing deprecated function
+	if sf.Node() != DefaultNodeID {
+		t.Errorf("default nodeID = %v, want %v", sf.Node(), DefaultNodeID)
 	}
 }
 
@@ -99,8 +99,8 @@ func TestSnowflake_Generate(t *testing.T) {
 		t.Fatalf("ID.Unwrap() type assertion failed")
 	}
 
-	if sf.Node() != 1 { //nolint:staticcheck // testing deprecated function
-		t.Errorf("snowflake.Node() = %v, want 1", sf.Node()) //nolint:staticcheck // testing deprecated function
+	if sf.Node() != 1 {
+		t.Errorf("snowflake.Node() = %v, want 1", sf.Node())
 	}
 }
 

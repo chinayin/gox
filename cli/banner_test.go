@@ -177,6 +177,132 @@ func TestNewStartupWithAdapter(t *testing.T) {
 	}
 }
 
+func TestMaskSensitiveArgs(t *testing.T) {
+	tests := []struct {
+		name     string
+		args     []string
+		expected []string
+	}{
+		{
+			name:     "equals form masked",
+			args:     []string{"app", "--token=abc123"},
+			expected: []string{"app", "--token=******"},
+		},
+		{
+			name:     "space form masked",
+			args:     []string{"app", "--password", "p@ss"},
+			expected: []string{"app", "--password", "******"},
+		},
+		{
+			name:     "short flag masked",
+			args:     []string{"app", "-apikey=xyz"},
+			expected: []string{"app", "-apikey=******"},
+		},
+		{
+			name:     "case insensitive",
+			args:     []string{"app", "--Register-Token=abc"},
+			expected: []string{"app", "--Register-Token=******"},
+		},
+		{
+			name:     "non-sensitive untouched",
+			args:     []string{"app", "--config=server.yaml", "--port", "8080"},
+			expected: []string{"app", "--config=server.yaml", "--port", "8080"},
+		},
+		{
+			name:     "sensitive flag followed by another flag",
+			args:     []string{"app", "--token", "--verbose"},
+			expected: []string{"app", "--token", "--verbose"},
+		},
+		{
+			name:     "dsn masked",
+			args:     []string{"app", "--mysql-dsn=user:pwd@tcp(host)/db"},
+			expected: []string{"app", "--mysql-dsn=******"},
+		},
+		{
+			name:     "empty args",
+			args:     []string{},
+			expected: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := maskSensitiveArgs(tt.args)
+			if len(result) != len(tt.expected) {
+				t.Fatalf("expected %d args, got %d", len(tt.expected), len(result))
+			}
+			for i := range result {
+				if result[i] != tt.expected[i] {
+					t.Errorf("arg[%d]: expected %q, got %q", i, tt.expected[i], result[i])
+				}
+			}
+		})
+	}
+}
+
+func TestMaskSensitiveArgs_DoesNotMutateInput(t *testing.T) {
+	args := []string{"app", "--token=abc"}
+	_ = maskSensitiveArgs(args)
+	if args[1] != "--token=abc" {
+		t.Errorf("input slice was mutated: %v", args)
+	}
+}
+
+func TestIsSensitiveName(t *testing.T) {
+	tests := []struct {
+		name     string
+		flag     string
+		expected bool
+	}{
+		{"token", "token", true},
+		{"register-token", "register-token", true},
+		{"password", "password", true},
+		{"access-key", "access-key", true},
+		{"secret", "client-secret", true},
+		{"auth", "auth-header", true},
+		{"uppercase", "TOKEN", true},
+		{"config", "config", false},
+		{"port", "port", false},
+		{"verbose", "verbose", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isSensitiveName(tt.flag); got != tt.expected {
+				t.Errorf("isSensitiveName(%q) = %v, want %v", tt.flag, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestAutoAddFlags_MasksSensitiveValues(t *testing.T) {
+	adapter := &mockAdapter{
+		name:    "TestApp",
+		version: "1.0.0",
+		flags: map[string]FlagInfo{
+			"token":  {Name: "token", Value: "supersecret", Changed: true, Type: "string"},
+			"config": {Name: "config", Value: "app.yaml", Changed: true, Type: "string"},
+		},
+	}
+
+	var buf bytes.Buffer
+	NewStartupWithAdapter(adapter).
+		WithWriter(&buf).
+		AutoAddFlags().
+		Print()
+
+	output := buf.String()
+	if strings.Contains(output, "supersecret") {
+		t.Errorf("sensitive flag value leaked in output: %s", output)
+	}
+	if !strings.Contains(output, maskedValue) {
+		t.Errorf("expected masked placeholder in output: %s", output)
+	}
+	if !strings.Contains(output, "app.yaml") {
+		t.Errorf("non-sensitive flag value should be displayed: %s", output)
+	}
+}
+
 // mockAdapter 用于测试
 type mockAdapter struct {
 	name    string

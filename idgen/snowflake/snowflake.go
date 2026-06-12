@@ -23,14 +23,6 @@ var (
 	// StepBits holds the number of bits to use for Step
 	// Remember, you have a total 22 bits to share between Node/Step
 	StepBits uint8 = 12
-
-	// Deprecated: the below four variables will be removed in a future release.
-	mu        sync.Mutex
-	nodeMax   int64 = -1 ^ (-1 << NodeBits)
-	nodeMask        = nodeMax << StepBits
-	stepMask  int64 = -1 ^ (-1 << StepBits)
-	timeShift       = NodeBits + StepBits
-	nodeShift       = StepBits
 )
 
 const encodeBase32Map = "ybndrfg8ejkmcpqxot1uwisza345h769"
@@ -100,16 +92,6 @@ func NewNode(node int64) (*Node, error) {
 	if NodeBits+StepBits > 22 {
 		return nil, errors.New("remember, you have a total 22 bits to share between Node/Step")
 	}
-	// re-calc in case custom NodeBits or StepBits were set
-	// Deprecated: the below block will be removed in a future release.
-	mu.Lock()
-	nodeMax = -1 ^ (-1 << NodeBits)
-	nodeMask = nodeMax << StepBits
-	stepMask = -1 ^ (-1 << StepBits)
-	timeShift = NodeBits + StepBits
-	nodeShift = StepBits
-	mu.Unlock()
-
 	n := Node{}
 	n.node = node
 	n.nodeMax = -1 ^ (-1 << NodeBits)
@@ -318,23 +300,27 @@ func ParseIntBytes(id [8]byte) ID {
 
 // Time returns an int64 unix timestamp in milliseconds of the snowflake ID time
 //
-// Deprecated: the below function will be removed in a future release.
+// 注意：解码使用当前 NodeBits/StepBits 即时计算，
+// 须与生成该 ID 时的位宽配置一致。
 func (f ID) Time() int64 {
-	return (int64(f) >> timeShift) + Epoch
+	return (int64(f) >> (NodeBits + StepBits)) + Epoch
 }
 
 // Node returns an int64 of the snowflake ID node number
 //
-// Deprecated: the below function will be removed in a future release.
+// 注意：解码使用当前 NodeBits/StepBits 即时计算，
+// 须与生成该 ID 时的位宽配置一致。
 func (f ID) Node() int64 {
-	return int64(f) & nodeMask >> nodeShift
+	nodeMax := int64(-1 ^ (-1 << NodeBits))
+	return int64(f) & (nodeMax << StepBits) >> StepBits
 }
 
 // Step returns an int64 of the snowflake step (or sequence) number
 //
-// Deprecated: the below function will be removed in a future release.
+// 注意：解码使用当前 NodeBits/StepBits 即时计算，
+// 须与生成该 ID 时的位宽配置一致。
 func (f ID) Step() int64 {
-	return int64(f) & stepMask
+	return int64(f) & (-1 ^ (-1 << StepBits))
 }
 
 // MarshalJSON returns a json byte array string of the snowflake ID.

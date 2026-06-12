@@ -84,11 +84,11 @@ func TestID_Unwrap(t *testing.T) {
 	}
 
 	// Verify we can access snowflake-specific methods
-	if sfID.Time() <= 0 { //nolint:staticcheck // testing deprecated function
+	if sfID.Time() <= 0 {
 		t.Error("snowflake Time() should return positive value")
 	}
-	if sfID.Node() != 1 { //nolint:staticcheck // testing deprecated function
-		t.Errorf("snowflake Node() = %v, want 1", sfID.Node()) //nolint:staticcheck // testing deprecated function
+	if sfID.Node() != 1 {
+		t.Errorf("snowflake Node() = %v, want 1", sfID.Node())
 	}
 }
 

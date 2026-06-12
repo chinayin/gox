@@ -9,6 +9,14 @@ import (
 	"golang.org/x/term"
 )
 
+// sensitiveKeywords 敏感参数名关键字（不区分大小写），命中的参数值在展示时遮蔽
+var sensitiveKeywords = []string{
+	"token", "password", "passwd", "secret", "key", "auth", "credential", "dsn",
+}
+
+// maskedValue 敏感值的展示占位符
+const maskedValue = "******"
+
 // Startup provides a fluent interface for printing startup information.
 type Startup struct {
 	name      string
@@ -78,6 +86,10 @@ func (s *Startup) AutoAddFlags(excludeNames ...string) *Startup {
 
 	for name, info := range flags {
 		if excludeMap[name] || !info.Changed {
+			continue
+		}
+		if isSensitiveName(name) {
+			section.Add(name, maskedValue)
 			continue
 		}
 		section.Add(name, FormatFlagValue(info))
@@ -213,7 +225,50 @@ func supportsColor() bool {
 	return term.IsTerminal(int(os.Stdout.Fd()))
 }
 
-// getFullCommand 获取完整命令行（包含所有参数）
+// getFullCommand 获取完整命令行（敏感参数值已遮蔽）
 func getFullCommand() string {
-	return strings.Join(os.Args, " ")
+	return strings.Join(maskSensitiveArgs(os.Args), " ")
+}
+
+// isSensitiveName 判断参数名是否包含敏感关键字（不区分大小写）
+func isSensitiveName(name string) bool {
+	lower := strings.ToLower(name)
+	for _, kw := range sensitiveKeywords {
+		if strings.Contains(lower, kw) {
+			return true
+		}
+	}
+	return false
+}
+
+// maskSensitiveArgs 遮蔽命令行参数中的敏感值，
+// 支持 --name=value 与 --name value 两种形式，不修改入参切片。
+func maskSensitiveArgs(args []string) []string {
+	masked := make([]string, len(args))
+	copy(masked, args)
+
+	for i := 0; i < len(masked); i++ {
+		arg := masked[i]
+		if !strings.HasPrefix(arg, "-") {
+			continue
+		}
+
+		name, _, hasValue := strings.Cut(strings.TrimLeft(arg, "-"), "=")
+		if !isSensitiveName(name) {
+			continue
+		}
+
+		if hasValue {
+			prefix, _, _ := strings.Cut(arg, "=")
+			masked[i] = prefix + "=" + maskedValue
+			continue
+		}
+		// --name value 形式：遮蔽下一个非 flag 参数
+		if i+1 < len(masked) && !strings.HasPrefix(masked[i+1], "-") {
+			masked[i+1] = maskedValue
+			i++
+		}
+	}
+
+	return masked
 }

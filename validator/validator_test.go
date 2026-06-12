@@ -1,8 +1,75 @@
 package validator
 
 import (
+	"sync"
 	"testing"
 )
+
+func TestNew_InvalidLocaleOptionPanics(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("expected New(WithLocale(\"fr\")) to panic on unsupported locale")
+		}
+	}()
+	_ = New(WithLocale("fr"))
+}
+
+func TestValidator_SetLocale_Concurrent(t *testing.T) {
+	v := New()
+
+	type testStruct struct {
+		Email string `validate:"required,email"`
+	}
+
+	var wg sync.WaitGroup
+	for range 10 {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			_ = v.SetLocale("zh")
+			_ = v.SetLocale("en")
+		}()
+		go func() {
+			defer wg.Done()
+			_ = v.Validate(testStruct{Email: "invalid"})
+			_ = v.Locale()
+			_ = v.Translator()
+		}()
+	}
+	wg.Wait()
+}
+
+func TestValidator_SetLocale_SwitchTranslation(t *testing.T) {
+	v := New()
+
+	type testStruct struct {
+		Email string `validate:"required,email"`
+	}
+
+	// 默认英文
+	err := v.Validate(testStruct{Email: "bad"})
+	if err == nil || !contains(err.Error(), "email") {
+		t.Errorf("expected english message, got: %v", err)
+	}
+
+	// 切中文后翻译应生效（New 已注册全部语言，SetLocale 仅切换）
+	if err := v.SetLocale("zh"); err != nil {
+		t.Fatalf("SetLocale(zh) error = %v", err)
+	}
+	err = v.Validate(testStruct{Email: "bad"})
+	if err == nil || !contains(err.Error(), "邮箱") {
+		t.Errorf("expected chinese message, got: %v", err)
+	}
+
+	// 切回英文
+	if err := v.SetLocale("en"); err != nil {
+		t.Fatalf("SetLocale(en) error = %v", err)
+	}
+	err = v.Validate(testStruct{Email: "bad"})
+	if err == nil || !contains(err.Error(), "email") {
+		t.Errorf("expected english message after switching back, got: %v", err)
+	}
+}
 
 func TestValidate_OfficialRules(t *testing.T) {
 	tests := []struct {
