@@ -38,7 +38,10 @@ linters:
     - errorlint
     # Team specific
     - tagliatelle
-    # - depguard # Disabled due to configuration issues
+    - sloglint     # rules.md: 业务代码统一 log/slog
+    - testifylint  # rules.md: 测试统一 testify
+    - noctx        # rules.md: 外部调用必须带 context/timeout
+    - intrange     # Go 1.22+: for i := range n
   settings:
     # ========== 错误处理 ==========
     errcheck:
@@ -52,36 +55,9 @@ linters:
         - fmt.Fprintf
         - fmt.Print
     # ========== 静态分析 ==========
+    # enable-all 自动跟进新版 govet 的 analyzer，避免手工枚举滞后
     govet:
-      enable:
-        - assign
-        - atomic
-        - bools
-        - buildtag
-        - cgocall
-        - copylocks
-        - errorsas
-        - httpresponse
-        - ifaceassert
-        - loopclosure
-        - lostcancel
-        - nilfunc
-        - printf
-        - shift
-        - stdmethods
-        - structtag
-        - tests
-        - unmarshal
-        - unreachable
-        - unsafeptr
-        - unusedresult
-        # 高价值扩展检查
-        - nilness
-        - sortslice
-        - stringintconv
-        - sigchanyzer
-        - reflectvaluecompare
-        - testinggoroutine
+      enable-all: true
       disable:
         - shadow
         - fieldalignment
@@ -173,18 +149,6 @@ linters:
           yaml: snake           # YAML 必须 snake_case
           mapstructure: snake   # Mapstructure 必须 snake_case
         use-field-name: false
-
-    # ========== 规范：依赖限制（重要！）==========
-    depguard:
-      rules:
-        DenyLog:
-          files:
-            - $all
-          deny:
-            - pkg: github.com/sirupsen/logrus
-              desc: "Use log/slog instead"
-            - pkg: log
-              desc: "Use log/slog instead"
 
   exclusions:
     generated: lax

@@ -113,7 +113,7 @@ func TestSnowflake_Generate_Uniqueness(t *testing.T) {
 	const count = 1000
 	ids := make(map[int64]bool, count)
 
-	for i := 0; i < count; i++ {
+	for range count {
 		id := gen.Generate()
 		if ids[id.Int64()] {
 			t.Fatalf("duplicate ID generated: %v", id.Int64())
@@ -134,11 +134,11 @@ func TestSnowflake_Generate_Concurrent(t *testing.T) {
 	var wg sync.WaitGroup
 	idsChan := make(chan int64, goroutines*idsPerGoroutine)
 
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for j := 0; j < idsPerGoroutine; j++ {
+			for range idsPerGoroutine {
 				id := gen.Generate()
 				idsChan <- id.Int64()
 			}

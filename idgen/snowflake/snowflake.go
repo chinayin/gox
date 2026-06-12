@@ -53,7 +53,7 @@ func init() {
 		decodeBase58Map[i] = 0xFF
 	}
 
-	for i := 0; i < len(encodeBase58Map); i++ {
+	for i := range len(encodeBase58Map) {
 		decodeBase58Map[encodeBase58Map[i]] = byte(i)
 	}
 
@@ -61,7 +61,7 @@ func init() {
 		decodeBase32Map[i] = 0xFF
 	}
 
-	for i := 0; i < len(encodeBase32Map); i++ {
+	for i := range len(encodeBase32Map) {
 		decodeBase32Map[encodeBase32Map[i]] = byte(i)
 	}
 }

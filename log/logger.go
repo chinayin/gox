@@ -68,7 +68,7 @@ func NewWithHandler(handler slog.Handler) *slog.Logger {
 // 常用于单元测试或不想输出日志的场景
 func NewNop() *Logger {
 	return &Logger{
-		Logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Logger:  slog.New(slog.DiscardHandler),
 		cleanup: func() {},
 	}
 }

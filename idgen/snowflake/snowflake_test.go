@@ -2,7 +2,6 @@ package snowflake
 
 import (
 	"bytes"
-	"reflect"
 	"testing"
 )
 
@@ -27,7 +26,7 @@ func TestGenerateDuplicateID(t *testing.T) {
 	node, _ := NewNode(1)
 
 	var x, y ID
-	for i := 0; i < 1000000; i++ {
+	for range 1000000 {
 		y = node.Generate()
 		if x == y {
 			t.Errorf("x(%d) & y(%d) are the same", x, y)
@@ -41,12 +40,12 @@ func TestRace(t *testing.T) {
 	node, _ := NewNode(1)
 
 	go func() {
-		for i := 0; i < 1000000000; i++ {
+		for range 1000000000 {
 			NewNode(1)
 		}
 	}()
 
-	for i := 0; i < 4000; i++ {
+	for range 4000 {
 		node.Generate()
 	}
 }
@@ -162,7 +161,7 @@ func TestBase32(t *testing.T) {
 		t.Fatalf("error creating NewNode, %s", err)
 	}
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		sf := node.Generate()
 		b32i := sf.Base32()
 		psf, err := ParseBase32([]byte(b32i))
@@ -211,7 +210,7 @@ func TestBase58(t *testing.T) {
 		t.Fatalf("error creating NewNode, %s", err)
 	}
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		sf := node.Generate()
 		b58 := sf.Base58()
 		psf, err := ParseBase58([]byte(b58))
@@ -345,7 +344,9 @@ func TestUnmarshalJSON(t *testing.T) {
 	for _, tc := range tt {
 		var id ID
 		err := id.UnmarshalJSON([]byte(tc.json))
-		if !reflect.DeepEqual(err, tc.expectedErr) {
+		// JSONSyntaxError 是携带原始字节的 struct error，按错误信息比较即可
+		if (err == nil) != (tc.expectedErr == nil) ||
+			(err != nil && err.Error() != tc.expectedErr.Error()) {
 			t.Fatalf("Expected to get error '%s' decoding JSON, but got '%s'", tc.expectedErr, err)
 		}
 
@@ -366,7 +367,7 @@ func BenchmarkParseBase32(b *testing.B) {
 	b.ReportAllocs()
 
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		ParseBase32([]byte(b32i))
 	}
 }
@@ -378,7 +379,7 @@ func BenchmarkBase32(b *testing.B) {
 	b.ReportAllocs()
 
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		sf.Base32()
 	}
 }
@@ -391,7 +392,7 @@ func BenchmarkParseBase58(b *testing.B) {
 	b.ReportAllocs()
 
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		ParseBase58([]byte(b58))
 	}
 }
@@ -403,7 +404,7 @@ func BenchmarkBase58(b *testing.B) {
 	b.ReportAllocs()
 
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		sf.Base58()
 	}
 }
@@ -414,7 +415,7 @@ func BenchmarkGenerate(b *testing.B) {
 	b.ReportAllocs()
 
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		_ = node.Generate()
 	}
 }
@@ -427,7 +428,7 @@ func BenchmarkGenerateMaxSequence(b *testing.B) {
 	b.ReportAllocs()
 
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		_ = node.Generate()
 	}
 }
@@ -442,7 +443,7 @@ func BenchmarkUnmarshal(b *testing.B) {
 
 	b.ReportAllocs()
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		_ = id2.UnmarshalJSON(bytes)
 	}
 }
@@ -454,7 +455,7 @@ func BenchmarkMarshal(b *testing.B) {
 
 	b.ReportAllocs()
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		_, _ = id.MarshalJSON()
 	}
 }
