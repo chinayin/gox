@@ -203,7 +203,7 @@ func isLocalConfig(filename string) bool {
 // createInstance 创建配置实例
 func createInstance(template any) any {
 	t := reflect.TypeOf(template)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	return reflect.New(t).Interface()
